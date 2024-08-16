@@ -1,8 +1,8 @@
 # Buyfy - Responsive E-commerce Website
 
-Buyfy is a responsive e-commerce website project built with HTML, CSS, and vanilla JavaScript on the client-side. It allows users to browse through various products, add items to their cart. It is a UI extensive project.
+Buyfy is a responsive e-commerce website project built with HTML, CSS, and vanilla JavaScript on the client-side. It allows users to browse through various products, add items to their cart. It is a UI extensive project.✅
 
-## Installation
+## Installation to follow
 
 1. Clone the repository
 2. Install the dependencies: ```npm install```
