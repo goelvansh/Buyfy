@@ -44,13 +44,23 @@ pipeline {
         success {
             script {
                 // Notify GitHub of successful PR build
-                githubNotify context: 'Build and Test', status: 'SUCCESS', description: 'Build and Tests passed!'
+                githubNotify(
+                    sha: env.GIT_COMMIT,
+                    context: 'continuous-integration/jenkins',
+                    description: 'Build success',
+                    state: 'success'
+                )
             }
         }
 
         failure {
             script {
-                githubNotify context: 'Build and Test', status: 'FAILURE', description: 'Build or Tests failed!'
+                githubNotify(
+                    sha: env.GIT_COMMIT,
+                    context: 'continuous-integration/jenkins',
+                    description: 'Build failed',
+                    state: 'failure'
+                )
             }
         }
     }
