@@ -1,6 +1,14 @@
+void setBuildStatus(String message, String state) {
+  step([
+      $class: "GitHubCommitStatusSetter",
+      reposSource: [$class: "ManuallyEnteredRepositorySource", url: "https://github.com/goelvansh/Buyfy.git"],
+      contextSource: [$class: "ManuallyEnteredCommitContextSource", context: "ci/jenkins/build-status"],
+      errorHandlers: [[$class: "ChangingBuildStatusErrorHandler", result: "UNSTABLE"]],
+      statusResultSource: [ $class: "ConditionalStatusResultSource", results: [[$class: "AnyBuildResult", message: message, state: state]] ]
+  ]);
+}
 pipeline {
     agent any
-
     // Triggers the pipeline on pull requests
     // triggers {
     //     githubPullRequests()
@@ -11,8 +19,6 @@ pipeline {
         GIT_REPO = 'goelvansh/Buyfy' // Example: 'myorg/myrepo'
         GIT_CREDENTIALS_ID = 'github-id' // ID of credentials configured in Jenkins
     }
-
-
     stages {
         stage('Build') {
             steps {
@@ -47,29 +53,12 @@ pipeline {
     }
 
     post {
-        success {
-            script {
-                // Notify GitHub of successful PR build
-                githubNotify(
-                    repo: env.GIT_REPO,
-                    credentialsId: env.GIT_CREDENTIALS_ID,
-                    sha: env.GIT_COMMIT, // Ensure GIT_COMMIT is correctly set
-                    context: 'continuous-integration/jenkins',
-                    description: 'Build completed successfully'
-                )
-            }
-        }
-
-        failure {
-            script {
-                githubNotify(
-                    repo: env.GIT_REPO,
-                    credentialsId: env.GIT_CREDENTIALS_ID,
-                    sha: env.GIT_COMMIT, // Ensure GIT_COMMIT is correctly set
-                    context: 'continuous-integration/jenkins',
-                    description: 'Build failed'
-                )
-            }
-        }
+    success {
+        setBuildStatus("Build succeeded", "SUCCESS");
     }
+    failure {
+        setBuildStatus("Build failed", "FAILURE");
+    }
+  }
 }
+
