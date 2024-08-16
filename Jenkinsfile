@@ -45,10 +45,11 @@ pipeline {
             script {
                 // Notify GitHub of successful PR build
                 githubNotify(
-                    sha: env.GIT_COMMIT,
+                    repo: env.GIT_REPO,
+                    credentialsId: env.GIT_CREDENTIALS_ID,
+                    sha: env.GIT_COMMIT, // Ensure GIT_COMMIT is correctly set
                     context: 'continuous-integration/jenkins',
-                    description: 'Build success',
-                    state: 'success'
+                    description: 'Build completed successfully'
                 )
             }
         }
@@ -56,10 +57,11 @@ pipeline {
         failure {
             script {
                 githubNotify(
-                    sha: env.GIT_COMMIT,
+                    repo: env.GIT_REPO,
+                    credentialsId: env.GIT_CREDENTIALS_ID,
+                    sha: env.GIT_COMMIT, // Ensure GIT_COMMIT is correctly set
                     context: 'continuous-integration/jenkins',
-                    description: 'Build failed',
-                    state: 'failure'
+                    description: 'Build failed'
                 )
             }
         }
