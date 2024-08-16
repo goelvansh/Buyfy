@@ -1,30 +1,17 @@
-void setBuildStatus(String message, String state) {
-  step([
-      $class: "GitHubCommitStatusSetter",
-      reposSource: [$class: "ManuallyEnteredRepositorySource", url: "https://github.com/goelvansh/Buyfy.git"],
-      contextSource: [$class: "ManuallyEnteredCommitContextSource", context: "ci/jenkins/build-status"],
-      errorHandlers: [[$class: "ChangingBuildStatusErrorHandler", result: "UNSTABLE"]],
-      statusResultSource: [ $class: "ConditionalStatusResultSource", results: [[$class: "AnyBuildResult", message: message, state: state]] ]
-  ]);
-}
 pipeline {
     agent any
-    // Triggers the pipeline on pull requests
-    // triggers {
-    //     githubPullRequests()
-    //     githubPush()
-    // }
+
     environment {
-        // Set your repository and credentials here
-        GIT_REPO = 'goelvansh/Buyfy' // Example: 'myorg/myrepo'
-        GIT_CREDENTIALS_ID = 'github-id' // ID of credentials configured in Jenkins
+        GIT_REPO = 'goelvansh/Buyfy' // GitHub repo in the format 'owner/repo'
+        GIT_CREDENTIALS_ID = 'github-id' // Jenkins credentials ID for GitHub
     }
+
     stages {
         stage('Build') {
             steps {
                 script {
-                    // Add your build commands here
-                    sh 'echo hiiii' // Example for a Gradle build
+                    // Example build command
+                    sh 'echo Build stage'
                 }
             }
         }
@@ -32,13 +19,13 @@ pipeline {
         stage('Test') {
             steps {
                 script {
-                    // Run unit tests or other types of tests
-                    sh './gradlew test' // Example for running tests with Gradle
+                    // Run unit tests
+                    sh './gradlew test'
                 }
             }
             post {
                 always {
-                    junit '**/build/test-results/**/*.xml' 
+                    junit '**/build/test-results/**/*.xml'
                 }
             }
         }
@@ -46,19 +33,50 @@ pipeline {
         stage('Static Analysis') {
             steps {
                 script {
-                    sh './gradlew check' 
+                    sh './gradlew check'
                 }
             }
         }
     }
 
     post {
-    success {
-        setBuildStatus("Build succeeded", "SUCCESS");
+        success {
+            script {
+                def commitHash = sh(returnStdout: true, script: 'git rev-parse HEAD').trim()
+                setBuildStatus("Build succeeded", "SUCCESS")
+                githubNotify(
+                    repo: env.GIT_REPO,
+                    credentialsId: env.GIT_CREDENTIALS_ID,
+                    sha: commitHash,
+                    context: 'ci/jenkins/build-status',
+                    description: 'Build completed successfully',
+                    state: 'success'
+                )
+            }
+        }
+        failure {
+            script {
+                def commitHash = sh(returnStdout: true, script: 'git rev-parse HEAD').trim()
+                setBuildStatus("Build failed", "FAILURE")
+                githubNotify(
+                    repo: env.GIT_REPO,
+                    credentialsId: env.GIT_CREDENTIALS_ID,
+                    sha: commitHash,
+                    context: 'ci/jenkins/build-status',
+                    description: 'Build failed',
+                    state: 'failure'
+                )
+            }
+        }
     }
-    failure {
-        setBuildStatus("Build failed", "FAILURE");
-    }
-  }
 }
 
+void setBuildStatus(String message, String state) {
+    step([
+        $class: "GitHubCommitStatusSetter",
+        reposSource: [$class: "ManuallyEnteredRepositorySource", url: "https://github.com/${env.GIT_REPO}.git"],
+        contextSource: [$class: "ManuallyEnteredCommitContextSource", context: "ci/jenkins/build-status"],
+        errorHandlers: [[$class: "ChangingBuildStatusErrorHandler", result: "UNSTABLE"]],
+        statusResultSource: [$class: "ConditionalStatusResultSource", results: [[$class: "AnyBuildResult", message: message, state: state]]]
+    ])
+}
