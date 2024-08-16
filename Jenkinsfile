@@ -6,6 +6,12 @@ pipeline {
     //     githubPullRequests()
     //     githubPush()
     // }
+    environment {
+        // Set your repository and credentials here
+        GIT_REPO = 'goelvansh/Buyfy' // Example: 'myorg/myrepo'
+        GIT_CREDENTIALS_ID = 'github-id' // ID of credentials configured in Jenkins
+    }
+
 
     stages {
         stage('Build') {
