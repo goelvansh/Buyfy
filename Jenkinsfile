@@ -9,7 +9,6 @@ void setBuildStatus(String message, String state) {
             $class: "ManuallyEnteredCommitContextSource", 
             context: "ci/jenkins/build-status"
         ],
-        credentialsId: "${env.GIT_CREDENTIALS_ID}",
         errorHandlers: [
             [$class: "ChangingBuildStatusErrorHandler", result: "UNSTABLE"]
         ],
