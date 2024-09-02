@@ -1,9 +1,33 @@
+void setBuildStatus(String message, String state) {
+    step([
+        $class: "GitHubCommitStatusSetter",
+        reposSource: [
+            $class: "ManuallyEnteredRepositorySource", 
+            url: "https://github.com/goelvansh/Buyfy"
+        ],
+        contextSource: [
+            $class: "ManuallyEnteredCommitContextSource", 
+            context: "ci/jenkins/build-status"
+        ],
+        credentialsId: "${env.GIT_CREDENTIALS_ID}",
+        errorHandlers: [
+            [$class: "ChangingBuildStatusErrorHandler", result: "UNSTABLE"]
+        ],
+        statusResultSource: [
+            $class: "ConditionalStatusResultSource", 
+            results: [
+                [$class: "AnyBuildResult", message: message, state: state]
+            ]
+        ]
+    ]);
+}
+
 pipeline {
     agent any
 
     environment {
-        GIT_REPO = 'goelvansh/Buyfy' // GitHub repo in the format 'owner/repo'
-        GIT_CREDENTIALS_ID = 'git-pr' // Jenkins credentials ID for GitHub
+        GIT_REPO = 'goelvansh/Buyfy' 
+        GIT_CREDENTIALS_ID = 'git-pr' 
     }
 
     stages {
@@ -39,34 +63,12 @@ pipeline {
         }
     }
 
-    post {
-        success {
-            script {
-                def commitHash = sh(returnStdout: true, script: 'git rev-parse HEAD').trim()
-                githubNotify(
-                    credentialsId: "${env.GIT_CREDENTIALS_ID}",
-                    status: 'SUCCESS',
-                    description: 'Build succeeded',
-                    context: 'ci/jenkins/build-status',
-                    sha: commitHash,
-                    repo: "${env.GIT_REPO}",
-                    account: 'goelvansh'
-                )
-            }
-        }
-        failure {
-            script {
-                def commitHash = sh(returnStdout: true, script: 'git rev-parse HEAD').trim()
-                githubNotify(
-                    credentialsId: "${env.GIT_CREDENTIALS_ID}",
-                    status: 'FAILURE',
-                    description: 'Build failed',
-                    context: 'ci/jenkins/build-status',
-                    sha: commitHash,
-                    repo: "${env.GIT_REPO}",
-                    account: 'goelvansh'
-                )
-            }
-        }
+   post {
+    success {
+        setBuildStatus("Build succeeded", "SUCCESS");
+    }
+    failure {
+        setBuildStatus("Build failed", "FAILURE");
+    }
     }
 }
