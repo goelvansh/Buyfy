@@ -1,7 +1,11 @@
 void setBuildStatus(String sha, String message, String state) {
+    if (sha == null || sha.isEmpty()) {
+        error "Commit SHA is null or empty. Cannot set build status."
+    }
+    
     def apiUrl = "https://api.github.com/repos/${env.GIT_REPO}/statuses/${sha}"
     def payload = [
-        state  : state,
+        state: state,
         description: message,
         context: "ci/jenkins/build-status"
     ]
@@ -22,14 +26,26 @@ pipeline {
     agent any
 
     environment {
-        GIT_REPO = 'goelvansh/Buyfy' 
-        GIT_CREDENTIALS_ID = 'git-pr' 
+        GIT_REPO = 'goelvansh/Buyfy' // GitHub repo in the format 'owner/repo'
+        GIT_CREDENTIALS_ID = 'git-pr' // Jenkins credentials ID for GitHub
     }
 
     stages {
+        stage('Checkout') {
+            steps {
+                script {
+                    // Checkout the code
+                    checkout scm
+                    env.COMMIT_SHA = sh(script: 'git rev-parse HEAD', returnStdout: true).trim()
+                    echo "Commit SHA: ${env.COMMIT_SHA}"
+                }
+            }
+        }
+
         stage('Build') {
             steps {
                 script {
+                    // Example build command
                     sh 'echo Build stage'
                 }
             }
@@ -38,6 +54,7 @@ pipeline {
         stage('Test') {
             steps {
                 script {
+                    // Run unit tests
                     sh './gradlew test'
                 }
             }
@@ -57,7 +74,7 @@ pipeline {
         }
     }
 
-   post {
+    post {
         success {
             setBuildStatus(env.COMMIT_SHA, "Build succeeded", "success")
         }
