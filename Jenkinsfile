@@ -1,24 +1,21 @@
-void setBuildStatus(String message, String state) {
-    step([
-        $class: "GitHubCommitStatusSetter",
-        reposSource: [
-            $class: "ManuallyEnteredRepositorySource", 
-            url: "https://github.com/goelvansh/Buyfy"
-        ],
-        contextSource: [
-            $class: "ManuallyEnteredCommitContextSource", 
-            context: "ci/jenkins/build-status"
-        ],
-        errorHandlers: [
-            [$class: "ChangingBuildStatusErrorHandler", result: "UNSTABLE"]
-        ],
-        statusResultSource: [
-            $class: "ConditionalStatusResultSource", 
-            results: [
-                [$class: "AnyBuildResult", message: message, state: state]
-            ]
-        ]
-    ]);
+void setBuildStatus(String sha, String message, String state) {
+    def apiUrl = "https://api.github.com/repos/${env.GIT_REPO}/statuses/${sha}"
+    def payload = [
+        state  : state,
+        description: message,
+        context: "ci/jenkins/build-status"
+    ]
+
+    def response = httpRequest(
+        acceptType: 'APPLICATION_JSON',
+        contentType: 'APPLICATION_JSON',
+        httpMode: 'POST',
+        url: apiUrl,
+        authentication: env.GIT_CREDENTIALS_ID,
+        requestBody: new groovy.json.JsonBuilder(payload).toString()
+    )
+
+    echo "Response: ${response}"
 }
 
 pipeline {
@@ -63,11 +60,11 @@ pipeline {
     }
 
    post {
-    success {
-        setBuildStatus("Build succeeded", "SUCCESS");
-    }
-    failure {
-        setBuildStatus("Build failed", "FAILURE");
-    }
+        success {
+            setBuildStatus(env.COMMIT_SHA, "Build succeeded", "success")
+        }
+        failure {
+            setBuildStatus(env.COMMIT_SHA, "Build failed", "failure")
+        }
     }
 }
