@@ -30,7 +30,6 @@ pipeline {
         stage('Build') {
             steps {
                 script {
-                    // Example build command
                     sh 'echo Build stage'
                 }
             }
@@ -39,7 +38,6 @@ pipeline {
         stage('Test') {
             steps {
                 script {
-                    // Run unit tests
                     sh './gradlew test'
                 }
             }
