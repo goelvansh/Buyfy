@@ -3,7 +3,7 @@ pipeline {
 
     environment {
         GIT_REPO = 'goelvansh/Buyfy' // GitHub repo in the format 'owner/repo'
-        GIT_CREDENTIALS_ID = 'github-id' // Jenkins credentials ID for GitHub
+        GIT_CREDENTIALS_ID = 'git-pr' // Jenkins credentials ID for GitHub
     }
 
     stages {
@@ -56,11 +56,16 @@ pipeline {
 }
 
 void setBuildStatus(String message, String state) {
-    step([
-        $class: "GitHubCommitStatusSetter",
-        reposSource: [$class: "ManuallyEnteredRepositorySource", url: "https://github.com/${env.GIT_REPO}.git"],
-        contextSource: [$class: "ManuallyEnteredCommitContextSource", context: "ci/jenkins/build-status"],
-        errorHandlers: [[$class: "ChangingBuildStatusErrorHandler", result: "UNSTABLE"]],
-        statusResultSource: [$class: "ConditionalStatusResultSource", results: [[$class: "AnyBuildResult", message: message, state: state]]]
-    ])
+    try {
+        step([
+            $class: "GitHubCommitStatusSetter",
+            reposSource: [$class: "ManuallyEnteredRepositorySource", url: "https://github.com/${env.GIT_REPO}.git"],
+            contextSource: [$class: "ManuallyEnteredCommitContextSource", context: "ci/jenkins/build-status"],
+            errorHandlers: [[$class: "ChangingBuildStatusErrorHandler", result: "UNSTABLE"]],
+            statusResultSource: [$class: "ConditionalStatusResultSource", results: [[$class: "AnyBuildResult", message: message, state: state]]]
+        ])
+    } catch (Exception e) {
+        echo "Failed to set GitHub commit status: ${e.message}"
+    }
 }
+
