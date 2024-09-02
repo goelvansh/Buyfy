@@ -44,28 +44,12 @@ pipeline {
             script {
                 def commitHash = sh(returnStdout: true, script: 'git rev-parse HEAD').trim()
                 setBuildStatus("Build succeeded", "SUCCESS")
-                githubNotify(
-                    repo: env.GIT_REPO,
-                    credentialsId: env.GIT_CREDENTIALS_ID,
-                    sha: commitHash,
-                    context: 'ci/jenkins/build-status',
-                    description: 'Build completed successfully',
-                    state: 'success'
-                )
             }
         }
         failure {
             script {
                 def commitHash = sh(returnStdout: true, script: 'git rev-parse HEAD').trim()
                 setBuildStatus("Build failed", "FAILURE")
-                githubNotify(
-                    repo: env.GIT_REPO,
-                    credentialsId: env.GIT_CREDENTIALS_ID,
-                    sha: commitHash,
-                    context: 'ci/jenkins/build-status',
-                    description: 'Build failed',
-                    state: 'failure'
-                )
             }
         }
     }
